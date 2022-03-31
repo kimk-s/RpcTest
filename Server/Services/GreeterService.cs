@@ -17,14 +17,14 @@ namespace Server.Services
             {
                 _logger.LogInformation($"Connected {GetHashCode()}");
 
-                await foreach (var item in requestStream.ReadAllAsync(context.CancellationToken))
+                await foreach (var item in requestStream.ReadAllAsync(context.CancellationToken)) // <<-- not wake when client network is changed (Wifi <-> Mobile data) ?
                 {
                     await responseStream.WriteAsync(new HelloReply { Message = "Hello, " + item.Name });
                 }
             }
             finally
             {
-                _logger.LogInformation($"Disconnected {GetHashCode()}");
+                _logger.LogInformation($"Disconnected {GetHashCode()}"); // <<-- no log when client network is changed (Wifi <-> Mobile data) ?
             }
         }
     }
