@@ -10,40 +10,52 @@ Console.CancelKeyPress += delegate (object? _, ConsoleCancelEventArgs e) {
     cts.Cancel();
 };
 
-var channel = GrpcChannel.ForAddress("http://3.38.166.204:5000");
-var client = new Greeter.GreeterClient(channel);
+Log("Started");
 
-Console.WriteLine("Client created");
-
-using (var call = client.SayHello())
+try
 {
-    var responseTask = Task.Run(async () =>
+    using var channel = GrpcChannel.ForAddress("http://3.36.61.80:5000");
+    var client = new Greeter.GreeterClient(channel);
+
+    Log("Client created");
+
+    using (var call = client.SayHello())
     {
-        await foreach (var item in call.ResponseStream.ReadAllAsync())
+        var responseTask = Task.Run(async () =>
         {
-            Console.WriteLine(item.Message);
-        }
-    });
+            await foreach (var item in call.ResponseStream.ReadAllAsync())
+            {
+                Log(item.Message);
+            }
+        });
 
-
-
-    while (!cts.IsCancellationRequested)
-    {
-        await call.RequestStream.WriteAsync(new HelloRequest { Name = "Kim" });
-
-        try
+        while (!cts.IsCancellationRequested)
         {
-            await Task.Delay(1000, cts.Token);
+            await call.RequestStream.WriteAsync(new HelloRequest { Name = "Kim" });
+
+            try
+            {
+                await Task.Delay(1000, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
         }
-        catch (OperationCanceledException)
-        {
-            break;
-        }
+
+        Log("Disconnecting");
+        await call.RequestStream.CompleteAsync();
+        await responseTask;
     }
 
-    Console.WriteLine("Disconnecting");
-    await call.RequestStream.CompleteAsync();
-    await responseTask;
+    Log("Disconnected");
+}
+finally
+{
+    Log("Stopped");
 }
 
-Console.WriteLine("Disconnected");
+static void Log(string message)
+{
+    Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC] {message}");
+}

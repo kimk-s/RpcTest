@@ -2,6 +2,15 @@ using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging(configure =>
+{
+    configure.AddSimpleConsole(c =>
+    {
+        c.UseUtcTimestamp = true;
+        c.TimestampFormat = "[yyyy-MM-dd HH:mm:ss UTC] ";
+    });
+});
+
 // Additional configuration is required to successfully run gRPC on macOS.
 // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
 
